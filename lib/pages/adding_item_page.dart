@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/data/dummy_categories.dart';
 import 'package:shopping_list_app/models/category.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
+
+import 'package:http/http.dart' as http;
 
 class AddingItemPage extends StatefulWidget {
   const AddingItemPage({super.key});
@@ -13,23 +17,50 @@ class AddingItemPage extends StatefulWidget {
 class _AddingItemPageState extends State<AddingItemPage> {
   final _formKey = GlobalKey<FormState>();
 
+  bool _isAdding = false;
+
   String _enteredName = '';
   int _enteredQuantity = 1;
   Category _selectedCategory = categories[Categories.vegetables]!;
 
   /// Validate the form and then save it to extract data for variables
   /// and send back to previous page (For now, it is Groceries page)
-  void _addItem() {
+  void _addItem() async {
+    setState(() {
+      _isAdding = true;
+    });
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      Navigator.of(context).pop(
-        GroceryItem(
-          id: DateTime.now().toString(),
-          name: _enteredName,
-          quantity: _enteredQuantity,
-          category: _selectedCategory,
-        ),
+      final newItem = GroceryItem(
+        id: DateTime.now().toString(),
+        name: _enteredName,
+        quantity: _enteredQuantity,
+        category: _selectedCategory,
       );
+
+      /// Post to real time data base
+      final url = Uri.https(
+        'shopping-list-app-c5a16-default-rtdb.asia-southeast1.firebasedatabase.app',
+        'shopping_list.json',
+      );
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(newItem.toPostJson()),
+      );
+
+      final Map<String, dynamic> resData = jsonDecode(response.body);
+
+      if (context.mounted) {
+        Navigator.of(context).pop(GroceryItem(
+          id: resData['name'],
+          name: newItem.name,
+          quantity: newItem.quantity,
+          category: newItem.category,
+        ));
+      }
     }
   }
 
@@ -131,14 +162,22 @@ class _AddingItemPageState extends State<AddingItemPage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
+                    onPressed: _isAdding
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     child: const Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: _addItem,
-                    child: const Text('Add Item'),
+                    onPressed: _isAdding ? null : _addItem,
+                    child: _isAdding
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : const Text('Add Item'),
                   ),
                 ],
               ),
