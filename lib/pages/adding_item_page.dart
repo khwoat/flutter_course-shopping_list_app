@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/data/dummy_categories.dart';
+import 'package:shopping_list_app/models/category.dart';
+import 'package:shopping_list_app/models/grocery_item.dart';
 
-class AddingItemPage extends StatelessWidget {
+class AddingItemPage extends StatefulWidget {
   const AddingItemPage({super.key});
+
+  @override
+  State<AddingItemPage> createState() => _AddingItemPageState();
+}
+
+class _AddingItemPageState extends State<AddingItemPage> {
+  final _formKey = GlobalKey<FormState>();
+
+  String _enteredName = '';
+  int _enteredQuantity = 1;
+  Category _selectedCategory = categories[Categories.vegetables]!;
+
+  /// Validate the form and then save it to extract data for variables
+  /// and send back to previous page (For now, it is Groceries page)
+  void _addItem() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: DateTime.now().toString(),
+          name: _enteredName,
+          quantity: _enteredQuantity,
+          category: _selectedCategory,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +45,7 @@ class AddingItemPage extends StatelessWidget {
           horizontal: 24,
         ),
         child: Form(
+          key: _formKey,
           child: Column(
             children: [
               // Name input field
@@ -32,6 +62,9 @@ class AddingItemPage extends StatelessWidget {
                   }
                   return null;
                 },
+                onSaved: (value) {
+                  _enteredName = value!;
+                },
               ),
               const SizedBox(height: 12),
 
@@ -46,6 +79,7 @@ class AddingItemPage extends StatelessWidget {
                           'Quantity',
                         ),
                       ),
+                      keyboardType: TextInputType.number,
                       initialValue: '1',
                       validator: (value) {
                         if (value == null ||
@@ -56,15 +90,23 @@ class AddingItemPage extends StatelessWidget {
                         }
                         return null;
                       },
+                      onSaved: (value) {
+                        _enteredQuantity = int.parse(value!);
+                      },
                     ),
                   ),
                   const SizedBox(width: 24),
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      onChanged: (value) {},
+                    child: DropdownButtonFormField<Category>(
+                      value: _selectedCategory,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value!;
+                        });
+                      },
                       items: categories.entries.map((category) {
                         return DropdownMenuItem(
-                          value: category.value.title,
+                          value: category.value,
                           child: Row(
                             children: [
                               Container(
@@ -89,11 +131,13 @@ class AddingItemPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _formKey.currentState!.reset();
+                    },
                     child: const Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _addItem,
                     child: const Text('Add Item'),
                   ),
                 ],
