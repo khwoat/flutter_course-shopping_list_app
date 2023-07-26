@@ -1,6 +1,6 @@
 # shopping_list_app
 
-A new Flutter project.
+This project is the one of the training projects of Flutter & Dart - The Complete Guide course. From this project, I learned about HTTP request to read and write data from Realtime Database and best practice for validation form.
 
 ## Getting Started
 
