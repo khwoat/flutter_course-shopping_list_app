@@ -1,6 +1,8 @@
-# shopping_list_app
+# shopping_list_app (Unable to run)
 
 This project is the one of the training projects of Flutter & Dart - The Complete Guide course. From this project, I learned about HTTP request to read and write data from Realtime Database and best practice for validation form.
+
+This project is unable to run because its firebase service was deleted.
 
 ## Getting Started
 
